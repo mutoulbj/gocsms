@@ -20,7 +20,7 @@ func Init() {
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
-	// 设置连接池参数，来自配置文件
+	// set up pool options
 	db.SetMaxOpenConns(config.GocsmsConfig().DBMaxOpenConns)
 	db.SetMaxIdleConns(config.GocsmsConfig().DBMaxIdleConns)
 	db.SetConnMaxLifetime(time.Duration(config.GocsmsConfig().DBConnMaxLifeMin) * time.Minute)
