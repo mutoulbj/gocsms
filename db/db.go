@@ -2,11 +2,11 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"time"
-	"database/sql"
 
-	"github.com/mutoulbj/gocsms/config"
+	"github.com/mutoulbj/gocsms/internal/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/uptrace/bun"
@@ -16,14 +16,14 @@ import (
 var BunDB *bun.DB
 
 func Init() {
-	db, err := sql.Open("pgx", config.Cfg.PostgresDSN)
+	db, err := sql.Open("pgx", config.GocsmsConfig().PostgresDSN)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	// 设置连接池参数，来自配置文件
-	db.SetMaxOpenConns(config.Cfg.DBMaxOpenConns)
-	db.SetMaxIdleConns(config.Cfg.DBMaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(config.Cfg.DBConnMaxLifeMin) * time.Minute)
+	db.SetMaxOpenConns(config.GocsmsConfig().DBMaxOpenConns)
+	db.SetMaxIdleConns(config.GocsmsConfig().DBMaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(config.GocsmsConfig().DBConnMaxLifeMin) * time.Minute)
 
 	ctx := context.Background()
 	if err := db.PingContext(ctx); err != nil {

@@ -11,11 +11,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.uber.org/fx"
 
-	"gocsms/internal/config"
-	"gocsms/internal/handlers"
-	"gocsms/internal/repository"
-	"gocsms/internal/services"
-	"gocsms/internal/ocpp"
+	"github.com/mutoulbj/gocsms/internal/config"
+	"github.com/mutoulbj/gocsms/internal/handlers"
+	"github.com/mutoulbj/gocsms/internal/middleware"
+	"github.com/mutoulbj/gocsms/internal/ocpp"
+	"github.com/mutoulbj/gocsms/internal/repository"
+	"github.com/mutoulbj/gocsms/internal/services"
 )
 
 func main() {
@@ -27,11 +28,12 @@ func main() {
 	// initialize dependency injection
 	app := fx.New(
 		fx.Provide(
-			config.NewConfig,
+			config.GocsmsConfig,
 			gocsmsLogger,
 			gocsmsFiberApp,
 			repository.GocsmsBunDB,
 			repository.GocsmsRedisClient,
+			repository.GocsmsChargePointRepository,
 			services.GocsmsChargePointService,
 			handlers.GocsmsChargePointHandler,
 			ocpp.GocsmsOCPPServer,
@@ -64,7 +66,7 @@ func setupApplication(
 	cfg *config.Config,
 	logger *logrus.Logger,
 	app *fiber.App,
-	chargePointHandler *handler.ChargePointHandler,
+	chargePointHandler *handlers.ChargePointHandler,
 	ocppServer *ocpp.Server,
 ) {
 	// setup middleware
@@ -105,9 +107,9 @@ func setupApplication(
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			sigChan := make(chan os.Signal, 1)
-			signal.Notify(signChan, syscall.SIGINT, syscall.SIGTERM)
+			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 			go func() {
-				<-sigChanl
+				<-sigChan
 				logger.Info("shutting down application...")
 				if err := app.Shutdown(); err != nil {
 					logger.Error("error shutting down Fiber: ", err)

@@ -5,24 +5,24 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 
-	"gocsms/internal/models"
+	"github.com/mutoulbj/gocsms/internal/models"
 )
 
 type ChargePointRepository struct {
-	db *bun.DB
+	db    *bun.DB
 	redis *redis.Client
-	log *logrus.Logger
+	log   *logrus.Logger
 }
 
-func gocsmsChargePointRepository(db *bun.DB, redis *redis.Client, log *logrus.Logger) *ChargePointRepository {
+func GocsmsChargePointRepository(db *bun.DB, redis *redis.Client, log *logrus.Logger) *ChargePointRepository {
 	return &ChargePointRepository{
-		db: db,
+		db:    db,
 		redis: redis,
-		log: log,
+		log:   log,
 	}
 }
 
@@ -52,12 +52,12 @@ func (r *ChargePointRepository) GetByID(ctx context.Context, id string) (*models
 	return cp, r.cacheChargePoint(ctx, cp)
 }
 
-func (r *ChargePointRepository) UpdateSttaus(ctx context.Context, id, status string) error {
+func (r *ChargePointRepository) UpdateStatus(ctx context.Context, id, status string) error {
 	_, err := r.db.NewUpdate().
-	    Model((*models.ChargePoint)(nil)).
-	    Set("status = ?, updated_at = ?", status, time.Now()).
-	    Where("id = ?", id)
-	    .Exec(ctx)
+		Model((*models.ChargePoint)(nil)).
+		Set("status = ?, updated_at = ?", status, time.Now()).
+		Where("id = ?", id).
+		Exec(ctx)
 	if err != nil {
 		r.log.Error("failed to update charge point status: ", err)
 		return err

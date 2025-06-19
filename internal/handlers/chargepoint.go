@@ -4,8 +4,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 
-	"gocsms/internal/models"
-	"gocsms/internal/services"
+	"github.com/mutoulbj/gocsms/internal/models"
+	"github.com/mutoulbj/gocsms/internal/services"
 )
 
 // @title Charge Point API
@@ -17,7 +17,7 @@ type ChargePointHandler struct {
 	log *logrus.Logger
 }
 
-func NewChargePointHandler(svc *services.ChargePointService, log *logrus.Logger) *ChargePointHandler {
+func GocsmsChargePointHandler(svc *services.ChargePointService, log *logrus.Logger) *ChargePointHandler {
 	return &ChargePointHandler{svc: svc, log: log}
 }
 
@@ -26,9 +26,9 @@ func (h *ChargePointHandler) RegisterRoutes(app *fiber.App) {
 
 	cp := v1.Group("/chargepoints")
 
-	cp.Post("/", h.Create)  // @Summary Register a new charge point
-	cp.Get("/:id", h.GetByID)  // @Summary Get charge point by ID
-	cp.Put("/:id/status", h.UpdateChargePointStatus) // @Summary Update charge point status
+	cp.Post("/", h.Create)                // @Summary Register a new charge point
+	cp.Get("/:id", h.GetByID)             // @Summary Get charge point by ID
+	cp.Put("/:id/status", h.UpdateStatus) // @Summary Update charge point status
 }
 
 // @Summary Create(Register) a new charge point
@@ -47,7 +47,7 @@ func (h *ChargePointHandler) Create(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	if err := h.svc.Register(c.Context(), cp); err != nil {
+	if err := h.svc.Register(c.Context(), &cp); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.Status(fiber.StatusCreated).JSON(cp)

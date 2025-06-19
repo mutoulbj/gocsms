@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 
-	"gocsms/internal/services"
+	"github.com/mutoulbj/gocsms/internal/services"
 )
 
 type Server struct {
@@ -28,9 +28,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func NewOCPPServer(svc *services.ChargePointService, log *logrus.Logger) *Server {
+func GocsmsOCPPServer(svc *services.ChargePointService, log *logrus.Logger) *Server {
 	return &Server{
-		handler: NewOCPPHandler(svc, log),
+		handler: GocsmsOCPPHandler(svc, log),
 		log:     log,
 		clients: make(map[string]*websocket.Conn),
 	}

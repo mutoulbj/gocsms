@@ -5,8 +5,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"gocsms/internal/models"
-	"gocsms/internal/repository"
+	"github.com/mutoulbj/gocsms/internal/models"
+	"github.com/mutoulbj/gocsms/internal/repository"
 )
 
 type ChargePointService struct {
@@ -14,7 +14,7 @@ type ChargePointService struct {
 	log  *logrus.Logger
 }
 
-func NewChargePointService(repo *repository.ChargePointRepository, log *logrus.Logger) *ChargePointService {
+func GocsmsChargePointService(repo *repository.ChargePointRepository, log *logrus.Logger) *ChargePointService {
 	return &ChargePointService{repo: repo, log: log}
 }
 
