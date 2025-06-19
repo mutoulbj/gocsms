@@ -1,0 +1,46 @@
+*.exe
+*.dll
+*.so
+*.dylib
+*.wasm
+*.o
+*.a
+*.bak
+*.tmp
+*.log
+*.out
+
+# Go build output
+# https://golang.org/cmd/go/#hdr-Build_commands
+/bin/
+/pkg/
+
+# vscode
+.vscode/
+.vscode/*.code-workspace
+*.code-workspace
+.history/
+
+# GoLand
+.idea/
+*.iml
+
+# macOS
+.DS_Store
+.localized
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+.env
+.env.*
+
+
+*.log
+*.log.*
+*.pid
+*.sock
+*~
+*.swp
