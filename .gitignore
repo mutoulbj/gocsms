@@ -44,3 +44,5 @@ Desktop.ini
 *.sock
 *~
 *.swp
+
+__debug_bin*
