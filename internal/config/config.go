@@ -21,12 +21,12 @@ type Config struct {
 }
 
 func GocsmsConfig() *Config {
-    if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(); err != nil {
 		log.Println(".env file not found,using environment variables")
 	}
 
 	return &Config{
-        ServerPort:       getEnv("PORT", "8001"),
+		ServerPort:       getEnv("SERVER_PORT", "8001"),
 		OCPPPort:         getEnv("OCPP_PORT", "8003"),
 		PostgresDSN:      getEnv("PG_DSN", ""),
 		DBMaxOpenConns:   getEnvAsInt("DB_MAX_OPEN_CONNS", 50),
