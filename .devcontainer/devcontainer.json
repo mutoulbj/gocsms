@@ -1,0 +1,13 @@
+{
+    "name": "GoCsms Dev Container",
+    "image": "mcr.microsoft.com/devcontainers/go:1.24",
+    "features": {},
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "go.toolsManagement.autoUpdate": true
+            }
+        }
+    },
+    "postCreateCommand": "go mod tidy"
+}
