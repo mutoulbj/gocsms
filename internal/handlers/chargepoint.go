@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/services"
+	"github.com/mutoulbj/gocsms/internal/utils"
 )
 
 // @title Charge Point API
@@ -42,9 +45,22 @@ func (h *ChargePointHandler) RegisterRoutes(app *fiber.App) {
 // @Failure 500 {object} fiber.Map
 // @Router /chargepoints [post]
 func (h *ChargePointHandler) Create(c *fiber.Ctx) error {
-	var cp models.ChargePoint
-	if err := c.BodyParser(&cp); err != nil {
+	var req models.CreateChargePointRequest
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	status := req.Status
+	if status == "" {
+		status = "Available"
+	}
+	cp := models.ChargePoint{
+		Name:         req.Name,
+		Code:         req.Code,
+		Status:       status,                       // Default to "Available" if not provided
+		SerialNumber: utils.GenerateSerialNumber(), // Generate or assign a serial number as needed
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	if err := h.svc.Register(c.Context(), &cp); err != nil {
