@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 
+	"github.com/mutoulbj/gocsms/internal/enums"
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/services"
 	"github.com/mutoulbj/gocsms/internal/utils"
@@ -15,6 +14,7 @@ import (
 // @version 1.0
 // @description API for managing charge points
 // @BasePath /api/v1
+
 type ChargePointHandler struct {
 	svc *services.ChargePointService
 	log *logrus.Logger
@@ -50,17 +50,16 @@ func (h *ChargePointHandler) Create(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	status := req.Status
-	if status == "" {
-		status = "Available"
+	statusStr := req.Status
+	status := enums.ChargePointStatusAvailable // Default status
+	if statusStr != "" {
+		status = enums.ChargePointStatusFromString(statusStr)
 	}
 	cp := models.ChargePoint{
 		Name:         req.Name,
 		Code:         req.Code,
-		Status:       status,                       // Default to "Available" if not provided
-		SerialNumber: utils.GenerateSerialNumber(), // Generate or assign a serial number as needed
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		Status:       status,
+		SerialNumber: utils.GenerateSerialNumber(),
 	}
 
 	if err := h.svc.Register(c.Context(), &cp); err != nil {
@@ -100,14 +99,18 @@ func (h *ChargePointHandler) GetByID(c *fiber.Ctx) error {
 // @Failure 400 {object} fiber.Map
 // @Router /chargepoints/{id}/status [put]
 func (h *ChargePointHandler) UpdateStatus(c *fiber.Ctx) error {
-	id := c.Params("id")
+	idStr := c.Params("id")
+	uuidID, err := utils.ParseUUID(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid UUID"})
+	}
 	var req struct {
 		Status string `json:"status"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	if err := h.svc.UpdateStatus(c.Context(), id, req.Status); err != nil {
+	if err := h.svc.UpdateStatus(c.Context(), uuidID, req.Status); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"message": "Status updated"})

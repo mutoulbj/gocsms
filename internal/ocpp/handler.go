@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
+	"github.com/mutoulbj/gocsms/internal/enums"
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/services"
 )
@@ -32,19 +34,26 @@ func (h *OCPPHandler) HandleMessage(ctx context.Context, chargePointID string, m
 		return h.createErrorResponse(ocppMsg.UniqueID, "NotSupported", "Only CALL messages supported")
 	}
 
+	parsedID, err := uuid.Parse(chargePointID)
+	if err != nil {
+		h.log.Error("Invalid chargePointID: ", err)
+		return h.createErrorResponse(ocppMsg.UniqueID, "FormationViolation", "Invalid chargePointID format")
+	}
+
 	switch ocppMsg.Action {
 	case "BootNotification":
-		return h.handleBootNotification(ctx, chargePointID, ocppMsg)
+		return h.handleBootNotification(ctx, parsedID, ocppMsg)
 	case "Heartbeat":
-		return h.handleHeartbeat(ctx, chargePointID, ocppMsg)
+
+		return h.handleHeartbeat(ctx, parsedID, ocppMsg)
 	case "StatusNotification":
-		return h.handleStatusNotification(ctx, chargePointID, ocppMsg)
+		return h.handleStatusNotification(ctx, parsedID, ocppMsg)
 	default:
 		return h.createErrorResponse(ocppMsg.UniqueID, "NotSupported", fmt.Sprintf("Action %s not supported", ocppMsg.Action))
 	}
 }
 
-func (h *OCPPHandler) handleBootNotification(ctx context.Context, chargePointID string, msg OCPPMessage) ([]byte, error) {
+func (h *OCPPHandler) handleBootNotification(ctx context.Context, chargePointID uuid.UUID, msg OCPPMessage) ([]byte, error) {
 	var req BootNotificationRequest
 	if err := json.Unmarshal(msg.Payload, &req); err != nil {
 		return h.createErrorResponse(msg.UniqueID, "FormationViolation", "Invalid payload")
@@ -54,7 +63,7 @@ func (h *OCPPHandler) handleBootNotification(ctx context.Context, chargePointID 
 	err := h.svc.Register(ctx, &models.ChargePoint{
 		ID:            chargePointID,
 		SerialNumber:  req.ChargePointSerialNumber,
-		Status:        "Available",
+		Status:        enums.ChargePointStatusAvailable,
 		LastHeartbeat: time.Now(),
 	})
 	if err != nil {
@@ -70,7 +79,7 @@ func (h *OCPPHandler) handleBootNotification(ctx context.Context, chargePointID 
 	return h.createResponse(msg.UniqueID, resp)
 }
 
-func (h *OCPPHandler) handleHeartbeat(ctx context.Context, chargePointID string, msg OCPPMessage) ([]byte, error) {
+func (h *OCPPHandler) handleHeartbeat(ctx context.Context, chargePointID uuid.UUID, msg OCPPMessage) ([]byte, error) {
 	h.log.Infof("Received Heartbeat from %s", chargePointID)
 	err := h.svc.UpdateStatus(ctx, chargePointID, "Available")
 	if err != nil {
@@ -84,7 +93,7 @@ func (h *OCPPHandler) handleHeartbeat(ctx context.Context, chargePointID string,
 	return h.createResponse(msg.UniqueID, resp)
 }
 
-func (h *OCPPHandler) handleStatusNotification(ctx context.Context, chargePointID string, msg OCPPMessage) ([]byte, error) {
+func (h *OCPPHandler) handleStatusNotification(ctx context.Context, chargePointID uuid.UUID, msg OCPPMessage) ([]byte, error) {
 	var req StatusNotificationRequest
 	if err := json.Unmarshal(msg.Payload, &req); err != nil {
 		return h.createErrorResponse(msg.UniqueID, "FormationViolation", "Invalid payload")

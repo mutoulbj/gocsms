@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 
 	"github.com/mutoulbj/gocsms/internal/models"
@@ -26,6 +27,6 @@ func (s *ChargePointService) GetByID(ctx context.Context, id string) (*models.Ch
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *ChargePointService) UpdateStatus(ctx context.Context, id, status string) error {
+func (s *ChargePointService) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	return s.repo.UpdateStatus(ctx, id, status)
 }

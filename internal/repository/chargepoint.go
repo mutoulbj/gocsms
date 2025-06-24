@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
@@ -52,7 +53,7 @@ func (r *ChargePointRepository) GetByID(ctx context.Context, id string) (*models
 	return cp, r.cacheChargePoint(ctx, cp)
 }
 
-func (r *ChargePointRepository) UpdateStatus(ctx context.Context, id, status string) error {
+func (r *ChargePointRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
 	_, err := r.db.NewUpdate().
 		Model((*models.ChargePoint)(nil)).
 		Set("status = ?, updated_at = ?", status, time.Now()).
@@ -62,7 +63,7 @@ func (r *ChargePointRepository) UpdateStatus(ctx context.Context, id, status str
 		r.log.Error("failed to update charge point status: ", err)
 		return err
 	}
-	return r.invalidateCache(ctx, id)
+	return r.invalidateCache(ctx, id.String())
 }
 
 func (r *ChargePointRepository) cacheChargePoint(ctx context.Context, cp *models.ChargePoint) error {
@@ -70,7 +71,7 @@ func (r *ChargePointRepository) cacheChargePoint(ctx context.Context, cp *models
 	if err != nil {
 		return err
 	}
-	return r.redis.Set(ctx, "chargepoint:"+cp.ID, data, 5*time.Minute).Err()
+	return r.redis.Set(ctx, "chargepoint:"+cp.ID.String(), data, 5*time.Minute).Err()
 }
 
 func (r *ChargePointRepository) getFromCache(ctx context.Context, id string) (*models.ChargePoint, error) {
