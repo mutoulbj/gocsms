@@ -1,0 +1,2 @@
+-- SQL migration
+DROP TABLE IF EXISTS users CASCADE;
