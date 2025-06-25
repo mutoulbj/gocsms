@@ -11,11 +11,11 @@ import (
 
 type ChargePoint struct {
 	bun.BaseModel      `bun:"table:charge_points,alias:cp"`
-	ID                 uuid.UUID                           `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ID                 uuid.UUID                           `bun:",pk,type:uuid,default:gen_random_uuid()" json:"id"`
 	Name               string                              `bun:"name,notnull" json:"name"`
-	Code               string                              `bun:"code,notnull" json:"code"`
+	Code               string                              `bun:"code,notnull,unique" json:"code"`
 	SerialNumber       string                              `bun:"serial_number,notnull" json:"serial_number"`
-	Status             enums.ChargePointStatus             `bun:"status,notnull" json:"status"`
+	Status             enums.ChargePointStatus             `bun:"status,type:VARCHAR(20),default:UNKNOWN,notnull" json:"status"`
 	LastHeartbeat      time.Time                           `bun:"last_heartbeat,notnull" json:"last_heartbeat"`
 	OcppProtocol       string                              `bun:"ocpp_protocol,notnull" json:"ocpp_protocol"`
 	RegistrationStatus enums.ChargePointRegistrationStatus `bun:"registration_status,notnull" json:"registration_status"`
@@ -25,13 +25,14 @@ type ChargePoint struct {
 	ChargeStationId uuid.UUID `bun:"charge_station_id,notnull" json:"charge_station_id"`
 
 	Connectors    []*Connector   `bun:"rel:has-many,join:id=charge_point_id" json:"connectors,omitempty"`
-	ChargeStation *ChargeStation  `bun:"rel:belongs-to,join:charge_station_id=id" json:"charge_station,omitempty"`
+	ChargeStation *ChargeStation `bun:"rel:belongs-to,join:charge_station_id=id" json:"charge_station,omitempty"`
 }
 
 type Connector struct {
 	bun.BaseModel `bun:"table:connectors,alias:c"`
-	ID            uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ID            uuid.UUID `bun:",pk,type:uuid,default:gen_random_uuid()" json:"id"`
 	ChargePointID uuid.UUID `bun:"charge_point_id,type:uuid,notnull" json:"charge_point_id"`
+	ConnectorID     string    `bun:"connector_id,notnull" json:"connector_id"`
 	Standard      string    `bun:"standard,notnull" json:"standard"`
 	Format        string    `bun:"format,notnull" json:"format"`
 	PowerType     string    `bun:"power_type,notnull" json:"power_type"`

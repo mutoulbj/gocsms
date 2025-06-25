@@ -1,55 +1,20 @@
 package enums
 
-type ChargePointRegistrationStatus int
+type ChargePointRegistrationStatus string
 
 const (
-	ChargePointRegistrationStatusUnknown ChargePointRegistrationStatus = iota
-	ChargePointRegistrationStatusAccepted
-	ChargePointRegistrationStatusRejected
-	ChargePointRegistrationStatusPending
+	ChargePointRegistrationStatusUnknown  ChargePointRegistrationStatus = "UNKNOWN"
+	ChargePointRegistrationStatusAccepted ChargePointRegistrationStatus = "ACCEPTED"
+	ChargePointRegistrationStatusRejected ChargePointRegistrationStatus = "REJECTED"
+	ChargePointRegistrationStatusPending  ChargePointRegistrationStatus = "PENDING"
 )
 
-func (s ChargePointRegistrationStatus) String() string {
+func (s ChargePointRegistrationStatus) IsValid() bool {
 	switch s {
-	case ChargePointRegistrationStatusAccepted:
-		return "Accepted"
-	case ChargePointRegistrationStatusRejected:
-		return "Rejected"
-	case ChargePointRegistrationStatusPending:
-		return "Pending"
+	case ChargePointRegistrationStatusUnknown, ChargePointRegistrationStatusAccepted,
+		ChargePointRegistrationStatusRejected, ChargePointRegistrationStatusPending:
+		return true
 	default:
-		return "Unknown"
-	}
-}
-
-func (s ChargePointRegistrationStatus) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + s.String() + `"`), nil
-}
-
-func (s *ChargePointRegistrationStatus) UnmarshalJSON(data []byte) error {
-	str := string(data)
-	switch str {
-	case `"Accepted"`:
-		*s = ChargePointRegistrationStatusAccepted
-	case `"Aejected"`:
-		*s = ChargePointRegistrationStatusRejected
-	case `"Pending"`:
-		*s = ChargePointRegistrationStatusPending
-	default:
-		*s = ChargePointRegistrationStatusUnknown
-	}
-	return nil
-}
-
-func ChargePointRegistrationStatusFromString(status string) ChargePointRegistrationStatus {
-	switch status {
-	case "Accepted":
-		return ChargePointRegistrationStatusAccepted
-	case "Rejected":
-		return ChargePointRegistrationStatusRejected
-	case "Pending":
-		return ChargePointRegistrationStatusPending
-	default:
-		return ChargePointRegistrationStatusUnknown
+		return false
 	}
 }

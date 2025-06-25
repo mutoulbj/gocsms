@@ -10,7 +10,7 @@ import (
 type MeterValue struct {
 	bun.BaseModel `bun:"table:meter_values,alias:mv"`
 
-	ID            uuid.UUID `bun:"id,pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ID            uuid.UUID `bun:"id,pk,type:uuid,default:gen_random_uuid()" json:"id"`
 	ChargePointID uuid.UUID `bun:"charge_point_id,type:uuid,notnull" json:"charge_point_id"`
 	ConnectorID   uuid.UUID `bun:"connector_id,type:uuid,notnull" json:"connector_id"`
 	Timestamp     time.Time `bun:"timestamp,notnull" json:"timestamp"`    // Unix timestamp in seconds

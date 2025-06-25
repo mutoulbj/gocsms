@@ -12,11 +12,10 @@ import (
 
 type Organization struct {
 	bun.BaseModel `bun:"table:organizations,alias:o"`
-	ID            uuid.UUID `bun:"id,pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ID            uuid.UUID `bun:"id,pk,type:uuid,default:gen_random_uuid()" json:"id"`
 	Name          string    `bun:"name,notnull" json:"name"`
 	Slug          string    `bun:"slug,notnull,unique" json:"slug"`
 	Description   string    `bun:"description,nullzero" json:"description"`
-	Email         string    `bun:"email,notnull,unique" json:"email"`
 	CreatedAt     time.Time `bun:"created_at,notnull,default:current_timestamp" json:"created_at"`
 	UpdatedAt     time.Time `bun:"updated_at,notnull,default:current_timestamp" json:"updated_at"`
 

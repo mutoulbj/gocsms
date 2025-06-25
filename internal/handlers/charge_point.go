@@ -50,11 +50,14 @@ func (h *ChargePointHandler) Create(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	statusStr := req.Status
-	status := enums.ChargePointStatusAvailable // Default status
-	if statusStr != "" {
-		status = enums.ChargePointStatusFromString(statusStr)
+	status := enums.ChargePointStatusUnknown
+	if req.Status != "" {
+		status = enums.ChargePointStatus(req.Status)
+		if !status.IsValid() {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid status"})
+		}
 	}
+
 	cp := models.ChargePoint{
 		Name:         req.Name,
 		Code:         req.Code,

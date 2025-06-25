@@ -8,7 +8,7 @@ import (
 type ChargeStation struct {
 	bun.BaseModel `bun:"table:charge_stations,alias:cs"`
 
-	ID              uuid.UUID `bun:",pk,type:uuid,default:uuid_generate_v4()" json:"id"`
+	ID              uuid.UUID `bun:",pk,type:uuid,default:gen_random_uuid()" json:"id"`
 	Name            string    `bun:"name,notnull" json:"name"`
 	Identity        string    `bun:"identity,notnull" json:"identity"`
 	Vendor          string    `bun:"vendor,notnull" json:"vendor"`
