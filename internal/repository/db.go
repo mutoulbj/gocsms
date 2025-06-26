@@ -16,7 +16,7 @@ import (
 )
 
 // GocsmsBunDB initializes a Bun ORM database connection for PostgreSQL
-func GocsmsBunDB(cfg *config.Config, log *logrus.Logger) *bun.DB {
+func NewBunDB(cfg *config.Config, log *logrus.Logger) *bun.DB {
 	sqldb, err := sql.Open("pgx", config.GocsmsConfig().PostgresDSN)
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
@@ -37,7 +37,7 @@ func GocsmsBunDB(cfg *config.Config, log *logrus.Logger) *bun.DB {
 }
 
 // GocsmsRedisClient initializes a Redis client
-func GocsmsRedisClient(cfg *config.Config, log *logrus.Logger) *redis.Client {
+func NewRedisClient(cfg *config.Config, log *logrus.Logger) *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.RedisAddr,
 		Password: cfg.RedisPassword,

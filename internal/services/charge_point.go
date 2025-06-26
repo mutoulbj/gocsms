@@ -15,7 +15,7 @@ type ChargePointService struct {
 	log  *logrus.Logger
 }
 
-func GocsmsChargePointService(repo *repository.ChargePointRepository, log *logrus.Logger) *ChargePointService {
+func NewChargePointService(repo *repository.ChargePointRepository, log *logrus.Logger) *ChargePointService {
 	return &ChargePointService{repo: repo, log: log}
 }
 

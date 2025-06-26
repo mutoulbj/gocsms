@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"go.uber.org/fx"
 
@@ -31,12 +32,18 @@ func main() {
 			config.GocsmsConfig,
 			gocsmsLogger,
 			gocsmsFiberApp,
-			repository.GocsmsBunDB,
-			repository.GocsmsRedisClient,
-			repository.GocsmsChargePointRepository,
-			services.GocsmsChargePointService,
-			handlers.GocsmsChargePointHandler,
-			ocpp.GocsmsOCPPServer,
+			repository.NewBunDB,
+			repository.NewRedisClient,
+			// charge point related providers
+			repository.NewChargePointRepository,
+			services.NewChargePointService,
+			handlers.NewChargePointHandler,
+			// auth related providers
+			repository.NewUserRepository,
+			services.NewAuthService,
+			handlers.NewAuthHandler,
+
+			ocpp.NewOCPPServer,
 		),
 		fx.Invoke(setupApplication),
 	)
@@ -67,14 +74,17 @@ func setupApplication(
 	logger *logrus.Logger,
 	app *fiber.App,
 	chargePointHandler *handlers.ChargePointHandler,
+	authSvc *services.AuthService,
+	redis *redis.Client,
 	ocppServer *ocpp.Server,
 ) {
 	// setup middleware
 	app.Use(middleware.Logger(logger))
 	app.Use(middleware.Cache())
 
-	// setup rotes
-	chargePointHandler.RegisterRoutes(app)
+	// setup routes
+	v1 := app.Group("/api/v1")
+	chargePointHandler.RegisterRoutes(v1)
 
 	// start fiber server
 	lc.Append(fx.Hook{

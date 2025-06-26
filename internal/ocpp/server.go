@@ -28,7 +28,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func GocsmsOCPPServer(svc *services.ChargePointService, log *logrus.Logger) *Server {
+func NewOCPPServer(svc *services.ChargePointService, log *logrus.Logger) *Server {
 	return &Server{
 		handler: GocsmsOCPPHandler(svc, log),
 		log:     log,

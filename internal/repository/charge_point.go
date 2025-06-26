@@ -19,7 +19,7 @@ type ChargePointRepository struct {
 	log   *logrus.Logger
 }
 
-func GocsmsChargePointRepository(db *bun.DB, redis *redis.Client, log *logrus.Logger) *ChargePointRepository {
+func NewChargePointRepository(db *bun.DB, redis *redis.Client, log *logrus.Logger) *ChargePointRepository {
 	return &ChargePointRepository{
 		db:    db,
 		redis: redis,

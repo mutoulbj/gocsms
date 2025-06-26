@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 
 	"github.com/mutoulbj/gocsms/internal/enums"
+	"github.com/mutoulbj/gocsms/internal/middleware"
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/services"
 	"github.com/mutoulbj/gocsms/internal/utils"
@@ -16,18 +18,18 @@ import (
 // @BasePath /api/v1
 
 type ChargePointHandler struct {
-	svc *services.ChargePointService
-	log *logrus.Logger
+	svc     *services.ChargePointService
+	authSvc *services.AuthService
+	redis   *redis.Client
+	log     *logrus.Logger
 }
 
-func GocsmsChargePointHandler(svc *services.ChargePointService, log *logrus.Logger) *ChargePointHandler {
-	return &ChargePointHandler{svc: svc, log: log}
+func NewChargePointHandler(svc *services.ChargePointService, authSvc *services.AuthService, redis *redis.Client, log *logrus.Logger) *ChargePointHandler {
+	return &ChargePointHandler{svc: svc, authSvc: authSvc, redis: redis, log: log}
 }
 
-func (h *ChargePointHandler) RegisterRoutes(app *fiber.App) {
-	v1 := app.Group("/api/v1")
-
-	cp := v1.Group("/chargepoints")
+func (h *ChargePointHandler) RegisterRoutes(app fiber.Router) {
+	cp := app.Group("/chargepoints", middleware.Auth(h.authSvc, h.redis, h.log))
 
 	cp.Post("/", h.Create)                // @Summary Register a new charge point
 	cp.Get("/:id", h.GetByID)             // @Summary Get charge point by ID
