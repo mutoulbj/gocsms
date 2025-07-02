@@ -42,7 +42,7 @@ func main() {
 			repository.NewUserRepository,
 			services.NewAuthService,
 			handlers.NewAuthHandler,
-
+		    // ocpp server for charge point
 			ocpp.NewOCPPServer,
 		),
 		fx.Invoke(setupApplication),
