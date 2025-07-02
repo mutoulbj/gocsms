@@ -57,3 +57,50 @@ func (r *UserRepository) Create(ctx context.Context, user *models.User) error {
 	}
 	return nil
 }
+
+func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
+	_, err := r.db.NewUpdate().
+		Model(user).
+		Column("first_name", "last_name").
+		Where("id = ?", user.ID).
+		Exec(ctx)
+	if err != nil {
+		r.log.Error("Failed to update user: ", err)
+		return err
+	}
+	return nil
+}
+
+func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*models.User, int64, error) {
+	var users []*models.User
+	total, err := r.db.NewSelect().
+		Model((*models.User)(nil)).
+		Count(ctx)
+	if err != nil {
+		r.log.Error("Failed to count users: ", err)
+		return nil, 0, err
+	}
+	err = r.db.NewSelect().
+		Model(&users).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Scan(ctx)
+	if err != nil {
+		r.log.Error("Failed to list users: ", err)
+		return nil, 0, err
+	}
+	return users, int64(total), nil
+}
+
+func (r *UserRepository) UsernameExists(ctx context.Context, username string) (bool, error) {
+	count, err := r.db.NewSelect().
+		Model((*models.User)(nil)).
+		Where("username = ?", username).
+		Count(ctx)
+	if err != nil {
+		r.log.Error("Failed to check if username exists: ", err)
+		return false, err
+	}
+	return count > 0, nil
+}
