@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"gocsms/internal/domain"
-
+	"github.com/google/uuid"
+	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 )
@@ -22,22 +22,20 @@ func NewOrganizationRepository(db *bun.DB, log *logrus.Logger) *OrganizationRepo
 }
 
 // Create creates a new organization
-func (r *OrganizationRepository) Create(ctx context.Context, org *domain.Organization) error {
-	_, err := r.db.NewInsert().Model(org).Exec(ctx)
-	if err != nil {
-		if pgErr, ok := err.(pgdriver.Error); ok && pgErr.IntegrityViolation() {
-			return domain.ErrDuplicateOrganization
-		}
-		r.log.WithError(err).Error("Failed to create organization")
-		return err
-	}
-	return nil
+func (r *OrganizationRepository) Create(ctx context.Context, org *models.Organization) error {
+	_, err := r.db.NewInsert().
+		Model(org).
+		Exec(ctx)
+	return err
 }
 
 // GetByID retrieves an organization by its ID
-func (r *OrganizationRepository) GetByID(ctx context.Context, id int64) (*domain.Organization, error) {
-	org := new(domain.Organization)
-	err := r.db.NewSelect().Model(org).Where("id = ?", id).Scan(ctx)
+func (r *OrganizationRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Organization, error) {
+	org := &models.Organization{}
+	err := r.db.NewSelect().
+		Model(org).
+		Where("id = ?", id).
+		Scan(ctx)
 	if err != nil {
 		r.log.WithError(err).Error("Failed to get organization by ID")
 		return nil, err
@@ -46,8 +44,12 @@ func (r *OrganizationRepository) GetByID(ctx context.Context, id int64) (*domain
 }
 
 // Update updates an organization
-func (r *OrganizationRepository) Update(ctx context.Context, org *domain.Organization) error {
-	_, err := r.db.NewUpdate().Model(org).WherePK().Exec(ctx)
+func (r *OrganizationRepository) Update(ctx context.Context, id uuid.UUID, org *models.Organization) error {
+	_, err := r.db.NewUpdate().
+		Model(org).
+		Column("name", "slug", "description").
+		Where("id = ?", id).
+		Exec(ctx)
 	if err != nil {
 		r.log.WithError(err).Error("Failed to update organization")
 		return err
@@ -56,8 +58,11 @@ func (r *OrganizationRepository) Update(ctx context.Context, org *domain.Organiz
 }
 
 // Delete deletes an organization by its ID
-func (r *OrganizationRepository) Delete(ctx context.Context, id int64) error {
-	_, err := r.db.NewDelete().Model((*domain.Organization)(nil)).Where("id = ?", id).Exec(ctx)
+func (r *OrganizationRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.NewDelete().
+		Model((*models.Organization)(nil)).
+		Where("id = ?", id).
+		Exec(ctx)
 	if err != nil {
 		r.log.WithError(err).Error("Failed to delete organization")
 		return err
@@ -66,12 +71,42 @@ func (r *OrganizationRepository) Delete(ctx context.Context, id int64) error {
 }
 
 // List returns all organizations
-func (r *OrganizationRepository) List(ctx context.Context) ([]*domain.Organization, error) {
-	var orgs []*domain.Organization
-	err := r.db.NewSelect().Model(&orgs).Scan(ctx)
+func (r *OrganizationRepository) List(ctx context.Context, offset, limit int) ([]*models.Organization, int64, error) {
+	var orgs []*models.Organization
+
+	// total count of organizations
+	total, err := r.db.NewSelect().
+		Model((*models.Organization)(nil)).
+		Count(ctx)
+	if err != nil {
+		r.log.WithError(err).Error("Failed to count organizations")
+		return nil, 0, err
+	}
+
+	// get organization list
+	err = r.db.NewSelect().
+		Model(&orgs).
+		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
+		Scan(ctx)
 	if err != nil {
 		r.log.WithError(err).Error("Failed to list organizations")
+		return nil, 0, err
+	}
+	return orgs, int64(total), nil
+}
+
+// GetBySlug retrieves an organization by its slug
+func (r *OrganizationRepository) GetBySlug(ctx context.Context, slug string) (*models.Organization, error) {
+	org := &models.Organization{}
+	err := r.db.NewSelect().
+		Model(org).
+		Where("slug = ?", slug).
+		Scan(ctx)
+	if err != nil {
+		r.log.WithError(err).Error("Failed to get organization by slug")
 		return nil, err
 	}
-	return orgs, nil
+	return org, nil
 }

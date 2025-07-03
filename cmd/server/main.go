@@ -18,6 +18,8 @@ import (
 	"github.com/mutoulbj/gocsms/internal/ocpp"
 	"github.com/mutoulbj/gocsms/internal/repository"
 	"github.com/mutoulbj/gocsms/internal/services"
+	"github.com/mutoulbj/gocsms/pkg/cache"
+	"github.com/mutoulbj/gocsms/pkg/db"
 )
 
 func main() {
@@ -29,11 +31,13 @@ func main() {
 	// initialize dependency injection
 	app := fx.New(
 		fx.Provide(
-			config.GocsmsConfig,
+			config.NewConfig,
 			gocsmsLogger,
 			gocsmsFiberApp,
-			repository.NewBunDB,
-			repository.NewRedisClient,
+			// postgresql database
+			db.NewDB,
+			// redis cache client
+			cache.NewRedisCache,
 			// charge point related providers
 			repository.NewChargePointRepository,
 			services.NewChargePointService,
@@ -42,7 +46,7 @@ func main() {
 			repository.NewUserRepository,
 			services.NewAuthService,
 			handlers.NewAuthHandler,
-		    // ocpp server for charge point
+			// ocpp server for charge point
 			ocpp.NewOCPPServer,
 		),
 		fx.Invoke(setupApplication),
@@ -70,7 +74,7 @@ func gocsmsFiberApp() *fiber.App {
 
 func setupApplication(
 	lc fx.Lifecycle,
-	cfg *config.Config,
+	cfg *config.ServerConfig,
 	logger *logrus.Logger,
 	app *fiber.App,
 	chargePointHandler *handlers.ChargePointHandler,

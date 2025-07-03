@@ -21,3 +21,9 @@ type Organization struct {
 
 	ChargeStations []*ChargeStation `bun:"rel:has-many,join:id=organization_id" json:"charge_stations,omitempty"`
 }
+
+type OrganizationCreateRequest struct {
+	Name        string `json:"name" validate:"required,min=3,max=100"`
+	Slug        string `json:"slug" validate:"required,min=3,max=50"`
+	Description string `json:"description" validate:"omitempty,max=500"`
+}

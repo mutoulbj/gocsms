@@ -11,16 +11,16 @@ import (
 	"github.com/mutoulbj/gocsms/internal/config"
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/repository"
-	"github.com/redis/go-redis/v9"
+	"github.com/mutoulbj/gocsms/pkg/cache"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
 	userRepo *repository.UserRepository
-	redis    *redis.Client
-	cfg      *config.Config
+	cache    *cache.Cache
 	log      *logrus.Logger
+	jwtCfg  *config.JWTConfig
 }
 
 type TokenPair struct {
@@ -38,15 +38,15 @@ type Claims struct {
 
 func NewAuthService(
 	userRepo *repository.UserRepository,
-	redis *redis.Client,
-	cfg *config.Config,
+	cache *cache.Cache,
 	log *logrus.Logger,
+	jwtCfg *config.JWTConfig,
 ) *AuthService {
 	return &AuthService{
 		userRepo: userRepo,
-		redis:    redis,
-		cfg:      cfg,
+		cache:    cache,
 		log:      log,
+		jwtCfg:  jwtCfg,
 	}
 }
 
@@ -85,10 +85,12 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*T
 	}
 	// check if session is still valid in Redis
 	sessionKey := "session:" + claims.UserID + ":" + claims.TokenID
-	if _, err := s.redis.Get(ctx, sessionKey).Result(); err == redis.Nil {
+	var sessionData string
+	if err := s.cache.Get(ctx, sessionKey, &sessionData); err != nil {
 		s.log.Warn("Session not found in Redis for user: ", claims.UserID)
 		return nil, err
 	}
+	// parse user ID from claims
 	userUUID, err := uuid.Parse(claims.UserID)
 	if err != nil {
 		s.log.Error("Failed to parse user ID to UUID: ", err)
@@ -105,8 +107,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*T
 
 func (s *AuthService) KickUser(ctx context.Context, userID, tokenID string) error {
 	sessionKey := "session:" + userID + ":" + tokenID
-	if err := s.redis.Del(ctx, sessionKey).Err(); err != nil {
-		s.log.Error("Failed to delete session in Redis: ", err)
+	if err := s.cache.Delete(ctx, sessionKey); err != nil {
 		return err
 	}
 	s.log.Info("User kicked successfully: ", userID)
@@ -115,8 +116,7 @@ func (s *AuthService) KickUser(ctx context.Context, userID, tokenID string) erro
 
 func (s *AuthService) Logout(ctx context.Context, userID, tokenID string) error {
 	sessionKey := "session:" + userID + ":" + tokenID
-	if err := s.redis.Del(ctx, sessionKey).Err(); err != nil {
-		s.log.Error("Failed to delete session in Redis: ", err)
+	if err := s.cache.Delete(ctx, sessionKey); err != nil {
 		return err
 	}
 	s.log.Info("User logged out successfully: ", userID)
@@ -137,11 +137,11 @@ func (s *AuthService) generateTokenPair(user *models.User) (*TokenPair, error) {
 		return nil, err
 	}
 
-	// store session in Redis
+	// store session in cache
 	sessionKey := "session:" + user.ID.String() + ":" + tokenID
-	err = s.redis.Set(context.Background(), sessionKey, "active", s.cfg.JWTRefreshTokenTTL).Err()
+	err = s.cache.Set(context.Background(), sessionKey, "active", s.jwtCfg.RefreshTokenTTL)
 	if err != nil {
-		s.log.Error("Failed to store session in Redis: ", err)
+		s.log.Error("Failed to store session in cache: ", err)
 		return nil, err
 	}
 	return &TokenPair{
@@ -151,11 +151,10 @@ func (s *AuthService) generateTokenPair(user *models.User) (*TokenPair, error) {
 }
 
 func (s *AuthService) generateJWT(user *models.User, tokenID string, isRefresh bool) (string, error) {
-	expiresIn := s.cfg.JWTAccessTokenTTL
+	expiresIn := s.jwtCfg.AccessTokenTTL
 	if isRefresh {
-		expiresIn = s.cfg.JWTRefreshTokenTTL
+		expiresIn = s.jwtCfg.RefreshTokenTTL
 	}
-	// Create claims with user information and token ID
 	claims := Claims{
 		UserID:    user.ID.String(),
 		Username:  user.Username,
@@ -165,12 +164,12 @@ func (s *AuthService) generateJWT(user *models.User, tokenID string, isRefresh b
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   user.ID.String(),
-			Issuer:    s.cfg.JWTIssuer,
+			Issuer:    s.jwtCfg.Issuer,
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.cfg.JWTSecret))
+	return token.SignedString([]byte(s.jwtCfg.Secret))
 }
 
 func (s *AuthService) ValidateToken(tokenString string, isRefresh bool) (*Claims, error) {
@@ -178,7 +177,7 @@ func (s *AuthService) ValidateToken(tokenString string, isRefresh bool) (*Claims
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
-		return []byte(s.cfg.JWTSecret), nil
+		return []byte(s.jwtCfg.Secret), nil
 	})
 
 	if err != nil {
