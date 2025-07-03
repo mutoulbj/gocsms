@@ -13,7 +13,6 @@
 # Go build output
 # https://golang.org/cmd/go/#hdr-Build_commands
 /bin/
-/pkg/
 
 # vscode
 .vscode/
