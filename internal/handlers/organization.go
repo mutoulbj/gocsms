@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/mutoulbj/gocsms/internal/dto"
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/services"
 	"github.com/mutoulbj/gocsms/pkg/response"
@@ -30,7 +31,7 @@ func NewOrganizationHandler(log *logrus.Logger, svc *services.OrganizationServic
 
 // Create creates a new organization
 func (h *OrganizationHandler) Create(c *fiber.Ctx) error {
-	var req models.OrganizationCreateRequest
+	var req dto.OrganizationCreateRequest
 
 	if err := c.BodyParser(&req); err != nil {
 		h.log.WithError(err).Error("failed to bind organization data")

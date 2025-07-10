@@ -32,12 +32,19 @@ func main() {
 	app := fx.New(
 		fx.Provide(
 			config.NewConfig,
+			config.ProvideDatabaseConfig,
+			config.ProvideServerConfig,
+			config.ProvideRedisConfig,
+			config.ProvideJWTConfig,
+			// provide fiber app
 			gocsmsLogger,
 			gocsmsFiberApp,
 			// postgresql database
 			db.NewDB,
+			db.ProvideBunDB,
 			// redis cache client
 			cache.NewRedisCache,
+			cache.ProviderRedisClient,
 			// charge point related providers
 			repository.NewChargePointRepository,
 			services.NewChargePointService,

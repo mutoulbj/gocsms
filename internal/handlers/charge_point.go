@@ -5,6 +5,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 
+	"github.com/mutoulbj/gocsms/internal/dto"
 	"github.com/mutoulbj/gocsms/internal/enums"
 	"github.com/mutoulbj/gocsms/internal/middleware"
 	"github.com/mutoulbj/gocsms/internal/models"
@@ -47,7 +48,7 @@ func (h *ChargePointHandler) RegisterRoutes(app fiber.Router) {
 // @Failure 500 {object} fiber.Map
 // @Router /chargepoints [post]
 func (h *ChargePointHandler) Create(c *fiber.Ctx) error {
-	var req models.CreateChargePointRequest
+	var req dto.CreateChargePointRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}

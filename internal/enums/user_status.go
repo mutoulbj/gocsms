@@ -16,3 +16,16 @@ func (s UserStatus) IsValid() bool {
 		return false
 	}
 }
+
+func (s UserStatus) String() string {
+	switch s {
+	case UserStatusActive:
+		return "Active"
+	case UserStatusSuspended:
+		return "Suspended"
+	case UserStatusBanned:
+		return "Banned"
+	default:
+		return "Unknown"
+	}
+}

@@ -53,3 +53,7 @@ func NewDB(cfg *config.DatabaseConfig) (*DB, error) {
 func (db *DB) Close() error {
 	return db.DB.Close()
 }
+
+func ProvideBunDB(db *DB) *bun.DB {
+	return db.DB
+}

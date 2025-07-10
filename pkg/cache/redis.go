@@ -32,6 +32,14 @@ func NewRedisCache(cfg *config.RedisConfig) (*Cache, error) {
 	return &Cache{client: rdb}, nil
 }
 
+func (c *Cache) Client() *redis.Client {
+	return c.client
+}
+
+func ProviderRedisClient(cache *Cache) *redis.Client {
+	return cache.Client()
+}
+
 func (c *Cache) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {

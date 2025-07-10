@@ -10,36 +10,36 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig
+	Server   ServerConfig
 	Database DatabaseConfig
-	Redis RedisConfig
-	JWT JWTConfig
+	Redis    RedisConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
-	ServerPort 	   string
-	OCPPPort       string
-	ReadTimeout    time.Duration
-	WriteTimeout   time.Duration
+	ServerPort   string
+	OCPPPort     string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 }
 
 type DatabaseConfig struct {
 	Host         string
-    Port         string
-    User         string
-    Password     string
-    DBName       string
-    SSLMode      string
-    MaxOpenConns int
-    MaxIdleConns int
-    MaxLifetime  time.Duration
+	Port         string
+	User         string
+	Password     string
+	DBName       string
+	SSLMode      string
+	MaxOpenConns int
+	MaxIdleConns int
+	MaxLifetime  time.Duration
 }
 
 type RedisConfig struct {
-	Host		 string
-	Port		 string
-	Password	 string
-	DB			 int
+	Host     string
+	Port     string
+	Password string
+	DB       int
 }
 
 type JWTConfig struct {
@@ -55,15 +55,15 @@ func NewConfig() *Config {
 	}
 	return &Config{
 		Server: ServerConfig{
-			ServerPort:         getEnv("SERVER_PORT", "8001"),
-			OCPPPort:           getEnv("OCPP_PORT", "8003"),
+			ServerPort: getEnv("SERVER_PORT", "8001"),
+			OCPPPort:   getEnv("OCPP_PORT", "8003"),
 		},
 		Database: DatabaseConfig{
 			Host:         getEnv("DB_HOST", "localhost"),
 			Port:         getEnv("DB_PORT", "5432"),
-			User:         getEnv("DB_USER", "user"),
+			User:         getEnv("DB_USER", "postgres"),
 			Password:     getEnv("DB_PASSWORD", "password"),
-			DBName:       getEnv("DB_NAME", "dbname"),
+			DBName:       getEnv("DB_NAME", "gocsms"),
 			SSLMode:      getEnv("DB_SSL_MODE", "disable"),
 			MaxOpenConns: getEnvAsInt("DB_MAX_OPEN_CONNS", 50),
 			MaxIdleConns: getEnvAsInt("DB_MAX_IDLE_CONNS", 10),
@@ -73,7 +73,7 @@ func NewConfig() *Config {
 			Host:     getEnv("REDIS_HOST", "localhost"),
 			Port:     getEnv("REDIS_PORT", "6379"),
 			Password: getEnv("REDIS_PASSWORD", ""),
-			DB:      getEnvAsInt("REDIS_DB", 0),
+			DB:       getEnvAsInt("REDIS_DB", 0),
 		},
 		JWT: JWTConfig{
 			Secret:          getEnv("JWT_SECRET", "1qaz2wsx3edc4rfv5tgb6yhn7ujm8ik9ol0p"),
@@ -82,6 +82,22 @@ func NewConfig() *Config {
 			Issuer:          getEnv("JWT_ISSUER", "gocsms"),
 		},
 	}
+}
+
+func ProvideServerConfig(cfg *Config) *ServerConfig {
+	return &cfg.Server
+}
+
+func ProvideDatabaseConfig(cfg *Config) *DatabaseConfig {
+	return &cfg.Database
+}
+
+func ProvideRedisConfig(cfg *Config) *RedisConfig {
+	return &cfg.Redis
+}
+
+func ProvideJWTConfig(cfg *Config) *JWTConfig {
+	return &cfg.JWT
 }
 
 func getEnvDuration(key string, defaultValue time.Duration) time.Duration {

@@ -3,10 +3,11 @@ package services
 import (
 	"context"
 
+	"github.com/google/uuid"
+	"github.com/mutoulbj/gocsms/internal/dto"
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/repository"
 	"github.com/sirupsen/logrus"
-	"github.com/google/uuid"
 )
 
 type OrganizationService struct {
@@ -22,7 +23,7 @@ func NewOrganizationService(repo *repository.OrganizationRepository, log *logrus
 }
 
 // Create from request
-func (s *OrganizationService) CreateFromRequest(ctx context.Context, req *models.OrganizationCreateRequest) (*models.Organization, error) {
+func (s *OrganizationService) CreateFromRequest(ctx context.Context, req *dto.OrganizationCreateRequest) (*models.Organization, error) {
 	s.log.Infof("Creating organization from request: %s", req.Name)
 	org := &models.Organization{
 		Name:        req.Name,

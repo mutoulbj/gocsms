@@ -26,47 +26,20 @@ type User struct {
 	Organization   *Organization    `bun:"rel:belongs-to,join:organization_id=id" json:"organization,omitempty"`
 }
 
-func (u *User) BeforeAppendModel(ctx context.Context, query bun.Query) error {
-	// Perform any necessary actions before appending the model
-	switch query.(type) {
-	case *bun.InsertQuery:
-		u.CreatedAt = time.Now()
-		u.UpdatedAt = time.Now()
-		if u.Status == "" {
-			u.Status = enums.UserStatusActive
-		}
-	case *bun.UpdateQuery:
-		u.UpdatedAt = time.Now()
+func (u *User) BeforeInsert(ctx context.Context) error {
+	// Set CreatedAt and UpdatedAt before inserting
+	u.CreatedAt = time.Now()
+	u.UpdatedAt = time.Now()
+	if u.Status == "" {
+		u.Status = enums.UserStatusActive
 	}
 	return nil
 }
 
-type RegisterRequest struct {
-	Username    string `json:"username" validate:"required,min=3,max=50"`
-	FirstName   string `json:"first_name" validate:"omitempty,max=50"`
-	LastName    string `json:"last_name" validate:"omitempty,max=50"`
-	Email       string `json:"email" validate:"required,email"`
-	PhoneNumber string `json:"phone_number" validate:"omitempty,e164"`
-	Password    string `json:"password" validate:"required,max=100"`
-	RePassword  string `json:"re_password" validate:"required,max=100,eqfield=Password"`
-}
-
-type LoginRequest struct {
-	UsernameOrEmail string `json:"username_or_email" validate:"required,min=3,max=50"`
-	Password        string `json:"password" validate:"required,max=100"`
-}
-
-type UpdateProfileRequest struct {
-	FirstName   string `json:"first_name" validate:"omitempty,max=50"`
-	LastName    string `json:"last_name" validate:"omitempty,max=50"`
-	Email       string `json:"email" validate:"omitempty,email"`
-	PhoneNumber string `json:"phone_number" validate:"omitempty,e164"`
-}
-
-type ChangePasswordRequest struct {
-	CurrentPassword string `json:"current_password" validate:"required,max=100"`
-	NewPassword     string `json:"new_password" validate:"required,max=100"`
-	ReNewPassword   string `json:"re_new_password" validate:"required,max=100,eqfield=NewPassword"`
+func (u *User) BeforeUpdate(ctx context.Context) error {
+	// Update UpdatedAt before updating
+	u.UpdatedAt = time.Now()
+	return nil
 }
 
 func (u *User) UserResponse() *User {
