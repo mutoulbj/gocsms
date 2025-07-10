@@ -19,13 +19,13 @@ func NewAuthHandler(authSvc *services.AuthService, log *logrus.Logger) *AuthHand
 	}
 }
 
-func (h *AuthHandler) RegisterRoutes(app fiber.Router) {
-	auth := app.Group("/auth")
+func (h *AuthHandler) RegisterRoutes(router fiber.Router) {
+	auth := router.Group("/auth")
 
-	auth.Post("/login", h.Login)                                           // @Summary User login
+	auth.Post("/login", h.Login)                                             // @Summary User login
 	auth.Post("/refresh", middleware.Auth(h.authSvc, nil, h.log), h.Refresh) // @Summary Refresh JWT token
-	auth.Post("/logout", middleware.Auth(h.authSvc, nil, h.log), h.Logout) // @Summary User logout
-	auth.Post("/kick", middleware.Auth(h.authSvc, nil, h.log), h.Kick)  // @Summary Kick user session
+	auth.Post("/logout", middleware.Auth(h.authSvc, nil, h.log), h.Logout)   // @Summary User logout
+	auth.Post("/kick", middleware.Auth(h.authSvc, nil, h.log), h.Kick)       // @Summary Kick user session
 }
 
 // @Summary Login to get access and refresh tokens
