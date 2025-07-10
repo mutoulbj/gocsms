@@ -23,7 +23,10 @@ func NewOrganizationService(repo *repository.OrganizationRepository, log *logrus
 }
 
 // Create from request
-func (s *OrganizationService) CreateFromRequest(ctx context.Context, req *dto.OrganizationCreateRequest) (*models.Organization, error) {
+func (s *OrganizationService) CreateFromRequest(
+	ctx context.Context,
+	req *dto.OrganizationCreateRequest,
+) (*models.Organization, error) {
 	s.log.Infof("Creating organization from request: %s", req.Name)
 	org := &models.Organization{
 		Name:        req.Name,
@@ -31,35 +34,55 @@ func (s *OrganizationService) CreateFromRequest(ctx context.Context, req *dto.Or
 		Description: req.Description,
 	}
 
-	err := s.repo.Create(ctx, org)
+	created, err := s.repo.Create(ctx, org)
 	if err != nil {
 		s.log.WithError(err).Error("Failed to create organization from request")
 		return nil, err
 	}
-	return org, nil
+	return created, nil
 }
 
 // Create creates a new organization
-func (s *OrganizationService) Create(ctx context.Context, org *models.Organization) (*models.Organization, error) {
+func (s *OrganizationService) Create(
+	ctx context.Context,
+	org *models.Organization,
+) (*dto.OrganizationResponse, error) {
 	s.log.Infof("Creating organization: %s", org.Name)
-	err := s.repo.Create(ctx, org)
+	created, err := s.repo.Create(ctx, org)
 	if err != nil {
 		s.log.WithError(err).Error("Failed to create organization")
 		return nil, err
 	}
-	return org, nil
+	return dto.ToOrganizationResponse(created), nil
 }
 
 // GetByID retrieves an organization by its ID
-func (s *OrganizationService) GetByID(ctx context.Context, id uuid.UUID) (*models.Organization, error) {
+func (s *OrganizationService) GetByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*dto.OrganizationResponse, error) {
 	s.log.Infof("Fetching organization with ID: %s", id)
-	return s.repo.GetByID(ctx, id)
+	result, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		s.log.WithError(err).Error("Failed to fetch organization")
+		return nil, err
+	}
+	return dto.ToOrganizationResponse(result), nil
 }
 
 // GetAll retrieves all organizations
-func (s *OrganizationService) GetAll(ctx context.Context, page, pageSize int) ([]*models.Organization, int64, error) {
+func (s *OrganizationService) GetAll(ctx context.Context, page, pageSize int) ([]*dto.OrganizationResponse, int64, error) {
 	s.log.Info("Fetching all organizations")
-	return s.repo.List(ctx, page, pageSize)
+	orgs, total, err := s.repo.List(ctx, page, pageSize)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var responses []*dto.OrganizationResponse
+	for _, org := range orgs {
+		responses = append(responses, dto.ToOrganizationResponse(org))
+	}
+	return responses, total, nil
 }
 
 // Update updates an organization

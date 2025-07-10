@@ -1,0 +1,9 @@
+@baseUrl=http://127.0.0.1:8001/api/v1/organizations
+
+### Create Organization
+POST {{baseUrl}}/
+Content-Type: application/json
+
+### Get Organization by ID
+GET {{baseUrl}}/1
+Content-Type: application/json

@@ -21,12 +21,17 @@ func NewOrganizationRepository(db *bun.DB, log *logrus.Logger) *OrganizationRepo
 	}
 }
 
-// Create creates a new organization
-func (r *OrganizationRepository) Create(ctx context.Context, org *models.Organization) error {
-	_, err := r.db.NewInsert().
+// Create creates a new organization and returns the created object
+func (r *OrganizationRepository) Create(ctx context.Context, org *models.Organization) (*models.Organization, error) {
+	err := r.db.NewInsert().
 		Model(org).
-		Exec(ctx)
-	return err
+		Returning("*").
+		Scan(ctx)
+	if err != nil {
+		r.log.WithError(err).Error("Failed to create organization")
+		return nil, err
+	}
+	return org, nil
 }
 
 // GetByID retrieves an organization by its ID

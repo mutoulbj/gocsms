@@ -10,7 +10,7 @@ import (
 type APIResponseInterface interface {
 	Success(c *fiber.Ctx, message string, data any) error
 	Created(c *fiber.Ctx, message string, data any) error
-	Error(c *fiber.Ctx, statusCode int, code, message string, details any)
+	Error(c *fiber.Ctx, statusCode int, code, message string, details any) error
 	ValidationError(c *fiber.Ctx, details any) error
 	Unauthorized(c *fiber.Ctx, message string) error
 	NotFound(c *fiber.Ctx, message string) error
@@ -24,6 +24,16 @@ type APIResponse struct {
 	Error     *ErrorData `json:"error,omitempty"`
 	Timestamp time.Time  `json:"timestamp"`
 	Success   bool       `json:"success"`
+}
+
+type APIResponseHandler struct {
+	log *logrus.Logger
+}
+
+func NewAPIResponse(log *logrus.Logger) APIResponseInterface {
+	return &APIResponseHandler{
+		log: log,
+	}
 }
 
 type ErrorData struct {
@@ -46,7 +56,7 @@ type AuthResponse struct {
 	ExpiresAt    time.Time `json:"expires_at"`
 }
 
-func Success(c *fiber.Ctx, message string, data any) error {
+func (r *APIResponseHandler) Success(c *fiber.Ctx, message string, data any) error {
 	return c.Status(fiber.StatusOK).JSON(APIResponse{
 		Success:   true,
 		Message:   message,
@@ -55,7 +65,7 @@ func Success(c *fiber.Ctx, message string, data any) error {
 	})
 }
 
-func Created(c *fiber.Ctx, message string, data any) error {
+func (r *APIResponseHandler) Created(c *fiber.Ctx, message string, data any) error {
 	return c.Status(fiber.StatusCreated).JSON(APIResponse{
 		Success:   true,
 		Message:   message,
@@ -64,7 +74,7 @@ func Created(c *fiber.Ctx, message string, data any) error {
 	})
 }
 
-func Error(c *fiber.Ctx, statusCode int, code, message string, details any) error {
+func (r *APIResponseHandler) Error(c *fiber.Ctx, statusCode int, code, message string, details any) error {
 	return c.Status(statusCode).JSON(APIResponse{
 		Success: false,
 		Message: "Request failed",
@@ -77,31 +87,31 @@ func Error(c *fiber.Ctx, statusCode int, code, message string, details any) erro
 	})
 }
 
-func ErrorHandler(c *fiber.Ctx, err error) error {
+func (r *APIResponseHandler) ErrorHandler(c *fiber.Ctx, err error) error {
 	code := fiber.StatusInternalServerError
 	// Log the error (optional)
-	logrus.Error(err)
+	r.log.Error(err)
 	if e, ok := err.(*fiber.Error); ok {
 		// If the error is a fiber.Error, use its status code
 		code = e.Code
 	}
 	// Return a generic error response
-	return Error(c, code, "INTERNAL_ERROR", err.Error(), nil)
+	return r.Error(c, code, "INTERNAL_ERROR", err.Error(), nil)
 }
 
-func ValidationError(c *fiber.Ctx, details any) error {
-	return Error(c, fiber.StatusBadRequest, "VALIDATION_ERROR", "Validation failed", details)
+func (r *APIResponseHandler) ValidationError(c *fiber.Ctx, details any) error {
+	return r.Error(c, fiber.StatusBadRequest, "VALIDATION_ERROR", "Validation failed", details)
 }
 
-func Unauthorized(c *fiber.Ctx, message string) error {
-	return Error(c, fiber.StatusUnauthorized, "UNAUTHORIZED", message, nil)
+func (r *APIResponseHandler) Unauthorized(c *fiber.Ctx, message string) error {
+	return r.Error(c, fiber.StatusUnauthorized, "UNAUTHORIZED", message, nil)
 }
 
-func NotFound(c *fiber.Ctx, message string) error {
-	return Error(c, fiber.StatusNotFound, "NOT_FOUND", message, nil)
+func (r *APIResponseHandler) NotFound(c *fiber.Ctx, message string) error {
+	return r.Error(c, fiber.StatusNotFound, "NOT_FOUND", message, nil)
 }
 
-func Paginated(c *fiber.Ctx, message string, items any, page, pageSize int, total int64) error {
+func (r *APIResponseHandler) Paginated(c *fiber.Ctx, message string, items any, page, pageSize int, total int64) error {
 	totalPages := int((total + int64(pageSize) - 1) / int64(pageSize))
 	data := Pagination{
 		Items:      items,
@@ -110,5 +120,5 @@ func Paginated(c *fiber.Ctx, message string, items any, page, pageSize int, tota
 		Total:      total,
 		TotalPages: totalPages,
 	}
-	return Success(c, message, data)
+	return r.Success(c, message, data)
 }

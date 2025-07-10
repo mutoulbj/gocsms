@@ -50,9 +50,19 @@ type JWTConfig struct {
 }
 
 func NewConfig() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Println(".env file not found,using environment variables")
+	envPaths := []string{".env", "../.env", "../../.env"}
+	envLoaded := false
+	for _, path := range envPaths {
+		if err := godotenv.Load(path); err == nil {
+			envLoaded = true
+			log.Printf("Loaded environment variables from %s", path)
+			break
+		}
 	}
+	if !envLoaded {
+		log.Println("No .env file found, using default environment variables")
+	}
+
 	return &Config{
 		Server: ServerConfig{
 			ServerPort: getEnv("SERVER_PORT", "8001"),

@@ -7,26 +7,48 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/mutoulbj/gocsms/internal/dto"
+	"github.com/mutoulbj/gocsms/internal/middleware"
 	"github.com/mutoulbj/gocsms/internal/models"
 	"github.com/mutoulbj/gocsms/internal/services"
 	"github.com/mutoulbj/gocsms/pkg/response"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
 // Organization management
 
 type OrganizationHandler struct {
-	log *logrus.Logger
-	svc *services.OrganizationService
-	res response.APIResponseInterface
+	log     *logrus.Logger
+	svc     *services.OrganizationService
+	authSvc *services.AuthService
+	redis   *redis.Client
+	res     response.APIResponseInterface
 }
 
-func NewOrganizationHandler(log *logrus.Logger, svc *services.OrganizationService, res response.APIResponseInterface) *OrganizationHandler {
+func NewOrganizationHandler(
+	log *logrus.Logger,
+	svc *services.OrganizationService,
+	authSvc *services.AuthService,
+	redis *redis.Client,
+	res response.APIResponseInterface,
+) *OrganizationHandler {
 	return &OrganizationHandler{
-		log: log,
-		svc: svc,
-		res: res,
+		log:     log,
+		svc:     svc,
+		authSvc: authSvc,
+		redis:   redis,
+		res:     res,
 	}
+}
+
+func (h *OrganizationHandler) RegisterRoutes(router fiber.Router) {
+	org := router.Group("/organizations", middleware.Auth(h.authSvc, h.redis, h.log))
+
+	org.Post("/", h.Create)      // Create organization
+	org.Get("/:id", h.Get)       // Get organization by ID
+	org.Get("/", h.List)         // List all organizations
+	org.Put("/:id", h.Update)    // Update organization by ID
+	org.Delete("/:id", h.Delete) // Delete organization by ID
 }
 
 // Create creates a new organization

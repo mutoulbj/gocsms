@@ -20,6 +20,7 @@ import (
 	"github.com/mutoulbj/gocsms/internal/services"
 	"github.com/mutoulbj/gocsms/pkg/cache"
 	"github.com/mutoulbj/gocsms/pkg/db"
+	"github.com/mutoulbj/gocsms/pkg/response"
 )
 
 func main() {
@@ -45,6 +46,8 @@ func main() {
 			// redis cache client
 			cache.NewRedisCache,
 			cache.ProviderRedisClient,
+			// response handler
+			response.NewAPIResponse,
 			// charge point related providers
 			repository.NewChargePointRepository,
 			services.NewChargePointService,
@@ -53,6 +56,10 @@ func main() {
 			repository.NewUserRepository,
 			services.NewAuthService,
 			handlers.NewAuthHandler,
+			// organization related providers
+			repository.NewOrganizationRepository,
+			services.NewOrganizationService,
+			handlers.NewOrganizationHandler,
 			// ocpp server for charge point
 			ocpp.NewOCPPServer,
 		),
@@ -85,6 +92,7 @@ func setupApplication(
 	logger *logrus.Logger,
 	app *fiber.App,
 	chargePointHandler *handlers.ChargePointHandler,
+	organizationHandler *handlers.OrganizationHandler,
 	authSvc *services.AuthService,
 	redis *redis.Client,
 	ocppServer *ocpp.Server,
@@ -96,6 +104,7 @@ func setupApplication(
 	// setup routes
 	v1 := app.Group("/api/v1")
 	chargePointHandler.RegisterRoutes(v1)
+	organizationHandler.RegisterRoutes(v1)
 
 	// start fiber server
 	lc.Append(fx.Hook{
