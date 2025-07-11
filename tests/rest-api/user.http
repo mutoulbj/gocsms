@@ -1,0 +1,28 @@
+@baseUrl=http://127.0.0.1:8001/api/v1/users
+
+### Create User
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "first_name": "林涛",
+  "last_name": "范",
+  "email": "testuser1@example.com",
+  "password": "securepassword",
+  "re_password": "securepassword"
+}
+
+##
+### Get User By ID
+GET {{baseUrl}}/36c44291-39be-4f3e-b144-9d2612bce00a
+Authorization: Bearer <token>
+Content-Type: application/json
+
+##
+### Get User List
+GET {{baseUrl}}/
+Authorization: Bearer <token>
+Content-Type: application/json
+
+##

@@ -17,7 +17,14 @@ type UserResponse struct {
 	CreatedAt      string `json:"created_at"`
 	UpdatedAt      string `json:"updated_at"`
 	LastLoginAt    string `json:"last_login_at"`
-	OrganizationID string `json:"organization_id"`
+}
+
+type UserListResponse struct {
+	Users      []*UserResponse `json:"users"`
+	Total      int64           `json:"total"`
+	TotalPages int             `json:"total_pages"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"page_size"`
 }
 
 type RegisterRequest struct {
@@ -63,6 +70,22 @@ func ToUserResponse(u *models.User) *UserResponse {
 		CreatedAt:      u.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:      u.UpdatedAt.Format(time.RFC3339),
 		LastLoginAt:    u.LastLoginAt.Format(time.RFC3339),
-		OrganizationID: u.OrganizationID.String(),
+	}
+}
+
+func ToUserListResponse(users []*models.User, total int64, page, pageSize int) *UserListResponse {
+	if users == nil {
+		users = []*models.User{}
+	}
+	var userResponses []*UserResponse
+	for _, user := range users {
+		userResponses = append(userResponses, ToUserResponse(user))
+	}
+	return &UserListResponse{
+		Users:      userResponses,
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)), // Calculate total pages
 	}
 }

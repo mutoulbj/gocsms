@@ -50,19 +50,6 @@ func NewAuthService(
 	}
 }
 
-func (s *AuthService) Register(ctx context.Context, username, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		s.log.Error("Failed to hash password: ", err)
-		return err
-	}
-	user := &models.User{
-		Username:     username,
-		PasswordHash: string(hashedPassword),
-	}
-	return s.userRepo.Create(ctx, user)
-}
-
 func (s *AuthService) Login(ctx context.Context, username, password string) (*TokenPair, error) {
 	user, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
@@ -173,7 +160,8 @@ func (s *AuthService) generateJWT(user *models.User, tokenID string, isRefresh b
 }
 
 func (s *AuthService) ValidateToken(tokenString string, isRefresh bool) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	s.log.Debug("Validating token: ", tokenString)
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}

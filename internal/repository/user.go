@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 	"github.com/mutoulbj/gocsms/internal/models"
@@ -41,7 +42,26 @@ func (r *UserRepository) GetUserByUsername(ctx context.Context, username string)
 		Where("username = ?", username).
 		Scan(ctx)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		r.log.Error("Failed to get user by username: ", err)
+		return nil, err
+	}
+	return user, nil
+}
+
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	user := &models.User{}
+	err := r.db.NewSelect().
+		Model(user).
+		Where("email = ?", email).
+		Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		r.log.Error("Failed to get user by email: ", err)
 		return nil, err
 	}
 	return user, nil
@@ -71,7 +91,10 @@ func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
 	return nil
 }
 
-func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*models.User, int64, error) {
+func (r *UserRepository) List(ctx context.Context, username, email string, page, page_size int) ([]*models.User, int64, error) {
+	limit := page_size
+	offset := (page - 1) * limit
+
 	var users []*models.User
 	total, err := r.db.NewSelect().
 		Model((*models.User)(nil)).
@@ -80,8 +103,17 @@ func (r *UserRepository) List(ctx context.Context, limit, offset int) ([]*models
 		r.log.Error("Failed to count users: ", err)
 		return nil, 0, err
 	}
-	err = r.db.NewSelect().
-		Model(&users).
+	query := r.db.NewSelect().Model(&users)
+
+	if username != "" {
+		query = query.Where("username ILIKE ?", "%"+username+"%")
+	}
+
+	if email != "" {
+		query = query.Where("email ILIKE ?", "%"+email+"%")
+	}
+
+	err = query.
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).

@@ -21,6 +21,7 @@ func Auth(authSvc *services.AuthService, redisClient *redis.Client, log *logrus.
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid Authorization header format"})
 		}
 
+		log.Debug("Validating token: ", parts[1])
 		claims, err := authSvc.ValidateToken(parts[1], false)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid or expired token"})

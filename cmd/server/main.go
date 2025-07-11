@@ -60,6 +60,9 @@ func main() {
 			repository.NewOrganizationRepository,
 			services.NewOrganizationService,
 			handlers.NewOrganizationHandler,
+			// user related providers
+			services.NewUserService,
+			handlers.NewUserHandler,
 			// ocpp server for charge point
 			ocpp.NewOCPPServer,
 		),
@@ -78,6 +81,27 @@ func gocsmsLogger() *logrus.Logger {
 func gocsmsFiberApp() *fiber.App {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			// Log the detailed error for debugging
+			fields := logrus.Fields{
+				"path":   c.Path(),
+				"method": c.Method(),
+				"ip":     c.IP(),
+			}
+
+			// Get stack trace if available
+			type stackTracer interface {
+				StackTrace() []byte
+			}
+
+			if stackErr, ok := err.(stackTracer); ok {
+				fields["stack_trace"] = string(stackErr.StackTrace())
+			} else {
+				// Include at least basic error info if no stack trace
+				fields["error"] = err.Error()
+			}
+
+			logrus.WithFields(fields).Error("Server error")
+
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
@@ -93,6 +117,7 @@ func setupApplication(
 	app *fiber.App,
 	chargePointHandler *handlers.ChargePointHandler,
 	organizationHandler *handlers.OrganizationHandler,
+	userHandler *handlers.UserHandler,
 	authSvc *services.AuthService,
 	redis *redis.Client,
 	ocppServer *ocpp.Server,
@@ -105,6 +130,7 @@ func setupApplication(
 	v1 := app.Group("/api/v1")
 	chargePointHandler.RegisterRoutes(v1)
 	organizationHandler.RegisterRoutes(v1)
+	userHandler.RegisterRoutes(v1)
 
 	// start fiber server
 	lc.Append(fx.Hook{
